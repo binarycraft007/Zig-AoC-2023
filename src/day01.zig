@@ -48,7 +48,7 @@ fn getCalibrationSum(doc: []const u8) !usize {
     return sum;
 }
 
-test "example" {
+test "part1 example" {
     const doc =
         \\1abc2
         \\pqr3stu8vwx
