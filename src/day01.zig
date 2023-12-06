@@ -11,19 +11,48 @@ const gpa = util.gpa;
 const data = @embedFile("data/day01.txt");
 
 pub fn main() !void {
-    const sum = try getCalibrationSum(data);
-    print("sum={}\n", .{sum});
+    const part1_sum = try getCalibrationSum(data, false);
+    print("part1 sum={}\n", .{part1_sum});
+    const part2_sum = try getCalibrationSum(data, true);
+    print("part2 sum={}\n", .{part2_sum});
 }
 
-fn getCalibrationValue(line: []const u8) !usize {
+const LetterMap = struct {
+    value: u8,
+    letter: []const u8,
+};
+
+fn getCalibrationValue(line: []const u8, letters: bool) !usize {
+    const letter_map = [_]LetterMap{
+        .{ .value = '1', .letter = "one" },
+        .{ .value = '2', .letter = "two" },
+        .{ .value = '3', .letter = "three" },
+        .{ .value = '4', .letter = "four" },
+        .{ .value = '5', .letter = "five" },
+        .{ .value = '6', .letter = "six" },
+        .{ .value = '7', .letter = "seven" },
+        .{ .value = '8', .letter = "eight" },
+        .{ .value = '9', .letter = "nine" },
+    };
     var index: usize = 0;
     var first: u8 = 0;
     var number: [2]u8 = undefined;
-    for (line) |c| {
+    for (line, 0..) |c, i| {
         if (std.ascii.isDigit(c)) {
             if (index == 0) first = c;
             number[1] = c;
             index += 1;
+        } else if (letters) {
+            inner: for (letter_map) |l| {
+                const end = i + l.letter.len;
+                if (l.letter.len > line[i..].len) continue :inner;
+                if (std.mem.eql(u8, line[i..end], l.letter)) {
+                    if (index == 0) first = l.value;
+                    number[1] = l.value;
+                    index += 1;
+                    break :inner;
+                }
+            }
         }
     }
     number[0] = first;
@@ -32,14 +61,14 @@ fn getCalibrationValue(line: []const u8) !usize {
     return try parseInt(usize, &number, 10);
 }
 
-fn getCalibrationSum(doc: []const u8) !usize {
+fn getCalibrationSum(doc: []const u8, letters: bool) !usize {
     var sum: usize = 0;
     var stream = std.io.fixedBufferStream(doc);
     while (true) {
         var buf: [1024]u8 = undefined;
         const line_maybe = try stream.reader().readUntilDelimiterOrEof(&buf, '\n');
         if (line_maybe) |line| {
-            const value = try getCalibrationValue(line);
+            const value = try getCalibrationValue(line, letters);
             sum += value;
         } else {
             break;
@@ -55,8 +84,22 @@ test "part1 example" {
         \\a1b2c3d4e5f
         \\treb7uchet
     ;
-    const sum = try getCalibrationSum(doc);
+    const sum = try getCalibrationSum(doc, false);
     try std.testing.expect(sum == 142);
+}
+
+test "part2 example" {
+    const doc =
+        \\two1nine
+        \\eightwothree
+        \\abcone2threexyz
+        \\xtwone3four
+        \\4nineeightseven2
+        \\zoneight234
+        \\7pqrstsixteen
+    ;
+    const sum = try getCalibrationSum(doc, true);
+    try std.testing.expect(sum == 281);
 }
 
 // Useful stdlib functions
