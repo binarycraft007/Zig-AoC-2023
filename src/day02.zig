@@ -11,8 +11,11 @@ const gpa = util.gpa;
 const data = @embedFile("data/day02.txt");
 
 pub fn main() !void {
-    const sum = try CubeSet.getIdSumByConstraint(data, .{ .red = 12, .green = 13, .blue = 14 });
-    print("sum={}\n", .{sum});
+    const part1_sum = try CubeSet.getIdSumByConstraint(data, .{ .red = 12, .green = 13, .blue = 14 });
+    print("part1 sum={}\n", .{part1_sum});
+
+    const part2_sum = try CubeSet.getSumOfPower(data);
+    print("part2 sum={}\n", .{part2_sum});
 }
 
 const CubeSet = struct {
@@ -72,6 +75,26 @@ const CubeSet = struct {
         }
         return sum;
     }
+
+    pub fn getSumOfPower(doc: []const u8) !usize {
+        var sum: usize = 0;
+        var stream = std.io.fixedBufferStream(doc);
+        while (true) {
+            var buf: [4096]u8 = undefined;
+            const line_maybe = try stream.reader().readUntilDelimiterOrEof(&buf, '\n');
+            if (line_maybe) |line| {
+                const cube_set = try getRequiredCubeSet(line);
+                var power: usize = 1;
+                inline for (@typeInfo(@TypeOf(cube_set.cubes)).Struct.fields) |field| {
+                    power *= @field(cube_set.cubes, field.name);
+                }
+                sum += power;
+            } else {
+                break;
+            }
+        }
+        return sum;
+    }
 };
 
 test "part1 example" {
@@ -84,6 +107,18 @@ test "part1 example" {
     ;
     const sum = try CubeSet.getIdSumByConstraint(doc, .{ .red = 12, .green = 13, .blue = 14 });
     try std.testing.expect(sum == 8);
+}
+
+test "part2 example" {
+    const doc =
+        \\Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+        \\Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+        \\Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+        \\Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+        \\Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+    ;
+    const sum = try CubeSet.getSumOfPower(doc);
+    try std.testing.expect(sum == 2286);
 }
 
 // Useful stdlib functions
