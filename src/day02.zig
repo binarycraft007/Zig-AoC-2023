@@ -31,7 +31,7 @@ const CubeSet = struct {
     fn getRecord(cube: []const u8, cubes: *Cubes) !void {
         inline for (@typeInfo(@TypeOf(cubes.*)).Struct.fields) |field| {
             if (std.mem.endsWith(u8, cube, field.name)) {
-                const num = try parseInt(u8, trim(u8, cube, " " ++ field.name), 10);
+                const num = try parseInt(usize, trim(u8, cube, " " ++ field.name), 10);
                 if (@field(cubes, field.name) < num) @field(cubes, field.name) = num;
                 return;
             }
@@ -42,7 +42,7 @@ const CubeSet = struct {
     pub fn getRequiredCubeSet(line: []const u8) !CubeSet {
         var it_colon = splitAny(u8, line, ":");
         const id = trim(u8, it_colon.first(), "Game ");
-        var cube_set: CubeSet = .{ .id = try parseInt(u8, id, 10) };
+        var cube_set: CubeSet = .{ .id = try parseInt(usize, id, 10) };
         var it_semicolon = splitAny(u8, it_colon.rest(), ";");
         while (it_semicolon.next()) |set| {
             var it_comma = splitAny(u8, set, ",");
